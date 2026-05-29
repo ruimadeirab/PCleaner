@@ -325,14 +325,25 @@ fetch('https://api.countapi.xyz/hit/pcleaner/main')
   .then(res => res.json())
   .then(data => {
     const footer = document.querySelector('.footer');
+
+    if (!footer) return;
+
     footer.innerText =
-      `PCleaner • Fast • Private • Users: ${data.value}`;
+      `PCleaner • Fast • Private • No Tracking • Users: ${data.value}`;
+  })
+  .catch(() => {
+    const footer = document.querySelector('.footer');
+
+    if (!footer) return;
+
+    footer.innerText =
+      `PCleaner • Fast • Private • No Tracking`;
   });
 </script>
 
 
 <div class="footer">
-  PCleaner • Fast • Private • No Tracking
+  PCleaner • Fast • Private • No Tracking • Users: 0
 </div>
 </body>
 </html>
