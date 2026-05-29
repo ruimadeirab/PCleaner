@@ -319,18 +319,26 @@ function generateQRCode(){
 
 setMode(window.pcleanerMode);
 
-fetch('https://api.countapi.xyz/hit/pcleaner/main')
-  .then(res => res.json())
-  .then(data => {
-    const footer = document.querySelector('.footer');
+window.addEventListener("load", async () => {
+  const footer = document.querySelector('.footer');
+  if (!footer) return;
+
+  try {
+    const res = await fetch('https://api.countapi.xyz/hit/pcleaner_app/visits');
+    const data = await res.json();
+
     footer.innerText =
-      `PCleaner • Fast • Private • Users: ${data.value}`;
-  });
+      `PCleaner • Fast • Private • No Tracking • Users: ${data.value}`;
+  } catch (e) {
+    footer.innerText =
+      `PCleaner • Fast • Private • No Tracking`;
+  }
+});
 </script>
 
 
 <div class="footer">
-  PCleaner • Fast • Private • No Tracking • Users: 0
+  PCleaner • Fast • Private • No Tracking • Users: loading...
 </div>
 </body>
 </html>
