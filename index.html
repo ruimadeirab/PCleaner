@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PCleaner</title>
+  <meta name="description" content="PCleaner is a free online tool that removes tracking parameters from URLs instantly. Clean links, remove UTM, gclid, fbclid and affiliate tracking. 100% private, runs in your browser." />
+  <meta name="keywords" content="url cleaner, remove utm, link cleaner, tracking remover, clean url, privacy tool, remove gclid, fbclid remover" />
+  <meta name="author" content="PCleaner" />
+  <meta property="og:title" content="PCleaner - Clean URLs instantly" />
+  <meta property="og:description" content="Remove tracking parameters from any URL. No backend, 100% private." />
+  <meta property="og:type" content="website" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 28px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: white;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      margin-bottom: 18px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .clean-btn { background:#3b82f6; color:white; }
+    .copy-btn { background:#10b981; color:white; }
+    .clear-btn { background:#374151; color:white; }
+
+    .result-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .result-title {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .preview-card{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      background:#0b1220;
+      border:1px solid #243244;
+      padding:12px;
+      border-radius:12px;
+      margin-bottom:12px;
+    }
+
+    .preview-card img{
+      width:40px;
+      height:40px;
+      border-radius:8px;
+    }
+
+    .muted{color:#94a3b8;font-size:13px;}
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        background: #0b1220;
+        border-top: 1px solid #1f2937;
+        color: #94a3b8;
+        font-size: 14px;
+      }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>PCleaner</h1>
+  <p class="subtitle">
+    PCleaner removes tracking parameters (UTM, gclid, fbclid, affiliate tags) from any URL instantly.
+    No tracking, no backend — everything runs locally in your browser.
+  </p>
+  <textarea id="urlInput" placeholder="Paste URL here..."></textarea>
+
+  <div style="margin-top:10px; color:#94a3b8; font-size:13px;">
+    Paste any link → Click Clean → Copy your privacy-safe URL
+  </div>
+
+  <div style="margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button onclick="setMode('safe')" id="safeBtn" style="background:#1e3a8a;color:white;">Safe Mode</button>
+    <button onclick="setMode('aggressive')" id="aggressiveBtn" style="background:#374151;color:white;">Aggressive Mode</button>
+  </div>
+
+  <div class="buttons">
+    <button class="clear-btn" onclick="pasteClipboard()">Paste</button>
+    <button class="clean-btn" onclick="cleanURL()">Clean</button>
+    <button class="copy-btn" onclick="copyURL()">Copy</button>
+    <button class="clear-btn" onclick="clearAll()">Clear</button>
+    <button class="clean-btn" onclick="generatePrettyLink()">Pretty Link</button>
+    <button class="copy-btn" onclick="generateQRCode()">QR Code</button>
+  </div>
+
+  <div class="result-box">
+    <div id="previewBox"></div>
+    <div id="prettyLinkBox"></div>
+    <div id="qrCodeBox"></div>
+    <div id="removedParams" style="color:#94a3b8;margin-bottom:10px;"></div>
+
+    <div class="result-title">Clean URL</div>
+    <div id="result">Your cleaned URL will appear here.</div>
+  </div>
+
+
+</div>
+
+
+<script>
+
+window.pcleanerMode = localStorage.getItem('pcleanerMode') || 'safe';
+
+window.lastCleanUrl = '';
+
+const domainRules = {
+  'amazon.': ['pd_rd_w','pf_rd_r','content-id','ref_','tag','pd_rd_wg','pd_rd_r'],
+  'youtube.': ['si','feature','utm_source'],
+  'google.': ['gclid','ei','ved','usg','oq'],
+  'facebook.': ['fbclid','fb_action_ids','fb_source'],
+  'tiktok.': ['ttclid'],
+  'instagram.': ['igshid'],
+};
+
+const safeParams = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id','utm_name','fbclid','gclid','dclid','msclkid','_ga','_gl'];
+const aggressiveParams = [...safeParams,'ref','ref_','tag','affiliate','affid','affiliate_id','pd_rd_w','pf_rd_r','pd_rd_wg','pd_rd_r','content-id','feature','si','spm','soc_src','soc_trk','tracking','source'];
+
+async function fetchPreview(url){
+  const box = document.getElementById('previewBox');
+  box.innerHTML = '<div class="muted">Loading preview...</div>';
+
+  try{
+    const res = await fetch('https://api.microlink.io/?url=' + encodeURIComponent(url));
+    const data = await res.json();
+
+    const meta = data.data;
+
+    box.innerHTML = `
+      <div class="preview-card">
+        <img src="${meta.logo?.url || meta.image?.url || ''}" />
+        <div>
+          <div><b>${meta.title || 'No title'}</b></div>
+          <div class="muted">${meta.description || ''}</div>
+          <div class="muted">${meta.url}</div>
+        </div>
+      </div>
+    `;
+  } catch(e){
+    box.innerHTML = '<div class="muted">Preview unavailable</div>';
+  }
+}
+
+function cleanURL(){
+  const input = document.getElementById('urlInput').value.trim();
+  const result = document.getElementById('result');
+  const removedContainer = document.getElementById('removedParams');
+
+  if(!input){ result.innerText='Please paste a URL first.'; return; }
+
+  try{
+    const url = new URL(input);
+    const hostname = url.hostname;
+    const removed=[];
+
+    const params = window.pcleanerMode==='aggressive'?aggressiveParams:safeParams;
+
+    for(const d in domainRules){
+      if(hostname.includes(d)){
+        domainRules[d].forEach(p=>{
+          if(url.searchParams.has(p)){url.searchParams.delete(p);removed.push(p);}
+        });
+      }
+    }
+
+    params.forEach(p=>{
+      if(url.searchParams.has(p)){url.searchParams.delete(p);removed.push(p);}
+    });
+
+    const clean = url.toString();
+    window.lastCleanUrl = clean;
+    result.innerText = clean;
+
+    removedContainer.innerText = removed.length ? 'Removed: '+[...new Set(removed)].join(', ') : 'No tracking parameters found.';
+
+
+    fetchPreview(clean);
+
+  }catch(e){
+    result.innerText='Invalid URL';
+  }
+}
+
+function setMode(mode){
+  window.pcleanerMode=mode;
+  localStorage.setItem('pcleanerMode',mode);
+
+  document.getElementById('safeBtn').style.background = mode==='safe'?'#1e3a8a':'#374151';
+  document.getElementById('aggressiveBtn').style.background = mode==='aggressive'?'#7f1d1d':'#374151';
+
+  cleanURL();
+}
+
+async function copyURL(){
+
+  if(
+    !window.lastCleanUrl ||
+    window.lastCleanUrl.includes('Invalid')
+  ){
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(window.lastCleanUrl);
+    alert('Clean URL copied!');
+  }catch{
+    alert('Could not copy URL.');
+  }
+}
+
+async function pasteClipboard(){
+  const t=await navigator.clipboard.readText();
+  document.getElementById('urlInput').value=t;
+  cleanURL();
+}
+
+function clearAll(){
+
+  window.lastCleanUrl = '';
+
+  document.getElementById('urlInput').value='';
+
+  document.getElementById('result').innerText =
+    'Your cleaned URL will appear here.';
+
+  document.getElementById('previewBox').innerHTML='';
+
+  document.getElementById('removedParams').innerText='';
+
+  document.getElementById('prettyLinkBox').innerHTML='';
+
+  document.getElementById('qrCodeBox').innerHTML='';
+}
+
+function generatePrettyLink(){
+  const url=document.getElementById('result').innerText;
+  const title=prompt('Text:', 'Open link');
+  if(!title)return;
+  const html=`<a href="${url}" target="_blank">${title}</a>`;
+  document.getElementById('prettyLinkBox').innerHTML=html;
+}
+
+function generateQRCode(){
+  const url=document.getElementById('result').innerText;
+  const qr=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  document.getElementById('qrCodeBox').innerHTML=`<img src="${qr}"/>`;
+}
+
+setMode(window.pcleanerMode);
+
+
+fetch('https://api.countapi.xyz/hit/pcleaner/main')
+  .then(res => res.json())
+  .then(data => {
+    const footer = document.querySelector('.footer');
+    footer.innerText =
+      `PCleaner • Fast • Private • Users: ${data.value}`;
+  });
+</script>
+
+
+<div class="footer">
+  PCleaner • Fast • Private • No Tracking
+</div>
+</body>
+</html>
