@@ -134,7 +134,6 @@
   <h1>PCleaner</h1>
   <p class="subtitle">
     PCleaner removes tracking parameters (UTM, gclid, fbclid, affiliate tags) from any URL instantly.
-    No tracking, no backend — everything runs locally in your browser.
   </p>
   <textarea id="urlInput" placeholder="Paste URL here..."></textarea>
 
@@ -320,24 +319,12 @@ function generateQRCode(){
 
 setMode(window.pcleanerMode);
 
-
 fetch('https://api.countapi.xyz/hit/pcleaner/main')
   .then(res => res.json())
   .then(data => {
     const footer = document.querySelector('.footer');
-
-    if (!footer) return;
-
     footer.innerText =
-      `PCleaner • Fast • Private • No Tracking • Users: ${data.value}`;
-  })
-  .catch(() => {
-    const footer = document.querySelector('.footer');
-
-    if (!footer) return;
-
-    footer.innerText =
-      `PCleaner • Fast • Private • No Tracking`;
+      `PCleaner • Fast • Private • Users: ${data.value}`;
   });
 </script>
 
